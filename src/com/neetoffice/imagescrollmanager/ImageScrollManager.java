@@ -131,7 +131,7 @@ public class ImageScrollManager {
 				clearTasks();
 				break;
 			}
-			if(scrollInterface != null)scrollInterface.onScroll(view, scrollState, scrollState, scrollState, scrollState);
+			if(scrollInterface != null)scrollInterface.onScroll(view, scrollState, firstVisibleItem, visibleItemCount, totalItemCount);
 		}		
 		
 	}
