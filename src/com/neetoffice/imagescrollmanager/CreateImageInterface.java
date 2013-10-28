@@ -2,7 +2,7 @@ package com.neetoffice.imagescrollmanager;
 
 import android.graphics.drawable.Drawable;
 
-public interface CreateImageInterface {
+public interface CreateImageInterface<T> {
 
-	Drawable[] onCreateImage(int position);
+	T[] onCreateImage(int position);
 }

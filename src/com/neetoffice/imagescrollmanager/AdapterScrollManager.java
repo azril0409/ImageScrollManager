@@ -11,7 +11,7 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 
 @SuppressLint("UseSparseArrays")
-public class ImageScrollManager {
+public class AdapterScrollManager<T> {
 	/**The user had previously been scrolling using touch and had performed a fling. The animation is now coasting to a stop.*/
 	public final static int SCROLL_STATE_FLING = OnScrollListener.SCROLL_STATE_FLING;
 	/**The view is not scrolling. Note navigating the list using the trackball counts as being in the idle state since these transitions are not animated.*/
@@ -19,9 +19,9 @@ public class ImageScrollManager {
 	/**The user is scrolling using touch, and their finger is still on the screen.*/
 	public final static int SCROLL_STATE_TOUCH_SCROLL = OnScrollListener.SCROLL_STATE_TOUCH_SCROLL;
 	private BaseAdapter adapter;
-	private CreateImageInterface imageScrollInterface;
+	private CreateImageInterface<T> imageScrollInterface;
 	private ScrollInterface scrollInterface;
-	private HashMap<Integer,Drawable[]> drawableMap = new HashMap<Integer,Drawable[]>();
+	private HashMap<Integer,T[]> drawableMap = new HashMap<Integer,T[]>();
 	private ArrayList<Task> tasks = new ArrayList<Task>();
 	private int firstVisibleItem = 0;
 	private int visibleItemCount = 0;
@@ -29,7 +29,7 @@ public class ImageScrollManager {
 	private Handler handler = new Handler();
 	private Listener listener;
 	
-	public ImageScrollManager(BaseAdapter adapter, CreateImageInterface imageScrollInterface,ScrollInterface scrollInterface){
+	public AdapterScrollManager(BaseAdapter adapter, CreateImageInterface<T> imageScrollInterface,ScrollInterface scrollInterface){
 		this.adapter = adapter;
 		this.imageScrollInterface = imageScrollInterface;
 		this.scrollInterface = scrollInterface;
@@ -58,7 +58,7 @@ public class ImageScrollManager {
 		}
 	}
 	
-	public Drawable[] getDrawable(int position){
+	public T[] getDrawable(int position){
 		return drawableMap.get(position);
 	}
 	
@@ -74,7 +74,7 @@ public class ImageScrollManager {
 		@Override
 		public void run() {
 			if(!isCancel && imageScrollInterface != null){
-				Drawable[] drawables = imageScrollInterface.onCreateImage(position);
+				T[] drawables = imageScrollInterface.onCreateImage(position);
 				handler.post(new TaskRunnable(position,drawables));
 			}
 		}
@@ -82,8 +82,8 @@ public class ImageScrollManager {
 	
 	private class TaskRunnable implements Runnable{
 		private int position;
-		private Drawable[] drawables;
-		TaskRunnable(int position,Drawable[] drawables){
+		private T[] drawables;
+		TaskRunnable(int position,T[] drawables){
 			this.position = position;
 			this.drawables = drawables;
 		}
@@ -109,7 +109,7 @@ public class ImageScrollManager {
 				clearTasks();
 				break;
 			case SCROLL_STATE_IDLE:
-				HashMap<Integer,Drawable[]> drawables = new HashMap<Integer,Drawable[]>();
+				HashMap<Integer,T[]> drawables = new HashMap<Integer,T[]>();
 				for(Integer key:drawableMap.keySet()){
 					if(key>firstVisibleItem && key <(firstVisibleItem+visibleItemCount)){
 						drawables.put(key, drawableMap.get(key));

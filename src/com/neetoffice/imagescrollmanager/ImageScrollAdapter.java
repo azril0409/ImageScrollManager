@@ -1,13 +1,12 @@
 package com.neetoffice.imagescrollmanager;
 
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 
 public abstract class ImageScrollAdapter extends BaseAdapter  implements CreateImageInterface,ScrollInterface{
-	private ImageScrollManager imageScrollManager= new ImageScrollManager(this,this,this);
+	private AdapterScrollManager<Drawable> imageScrollManager= new AdapterScrollManager(this,this,this);
 		
 	public OnScrollListener getOnScrollListener(){
 		return imageScrollManager.getOnScrollListener();
@@ -23,7 +22,7 @@ public abstract class ImageScrollAdapter extends BaseAdapter  implements CreateI
 
 	@Override
 	public void onScroll(AbsListView view, int scrollState,	int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-		if (scrollState == ImageScrollManager.SCROLL_STATE_IDLE & (firstVisibleItem + visibleItemCount >= totalItemCount)) {
+		if (scrollState == AdapterScrollManager.SCROLL_STATE_IDLE & (firstVisibleItem + visibleItemCount >= totalItemCount)) {
 			onScrollend(view);
 		}
 	}
