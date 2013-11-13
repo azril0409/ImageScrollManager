@@ -74,28 +74,27 @@ public class AdapterScrollManager<T> {
 		@Override
 		public void run() {
 			if(!isCancel && imageScrollInterface != null){
-				T[] drawables = imageScrollInterface.onCreateImage(position);
-				handler.post(new TaskRunnable(position,drawables));
+				T[] t = imageScrollInterface.onCreateImage(position);
+				handler.post(new TaskRunnable(position,t));
 			}
 		}
 	}
 	
 	private class TaskRunnable implements Runnable{
 		private int position;
-		private T[] drawables;
-		TaskRunnable(int position,T[] drawables){
+		private T[] t;
+		TaskRunnable(int position,T[] t){
 			this.position = position;
-			this.drawables = drawables;
+			this.t = t;
 		}
 		public void run() {
-			drawableMap.put(position,drawables);
+			drawableMap.put(position,t);
 			if(adapter != null)adapter.notifyDataSetChanged();
 		}		
 	}
 	
 	private class Listener implements OnScrollListener{
-
-
+		int scrollState;
 
 		public void onScroll(AbsListView view, int f, int v, int t) {
 			firstVisibleItem = f;
@@ -104,6 +103,7 @@ public class AdapterScrollManager<T> {
 		}
 
 		public void onScrollStateChanged(AbsListView view, int scrollState) {
+			this.scrollState = scrollState;
 			switch (scrollState) {
 			case SCROLL_STATE_FLING:
 				clearTasks();
