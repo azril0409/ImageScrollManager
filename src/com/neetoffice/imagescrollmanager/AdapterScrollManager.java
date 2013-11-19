@@ -89,7 +89,7 @@ public class AdapterScrollManager<T> {
 		}
 		public void run() {
 			drawableMap.put(position,t);
-			if(adapter != null)adapter.notifyDataSetChanged();
+			if(adapter != null && listener.scrollState == SCROLL_STATE_IDLE)adapter.notifyDataSetChanged();
 		}		
 	}
 	
@@ -117,15 +117,12 @@ public class AdapterScrollManager<T> {
 				}
 				drawableMap.clear();
 				drawableMap.putAll(drawables);
-				if (firstVisibleItem + visibleItemCount >= totalItemCount) {
-					//imageScrollInterface.onScrollend(view, scrollState);
-				}else{
-					for(int i = 0; i < visibleItemCount; i++) {
-						Task task = new Task(firstVisibleItem+i);
-						tasks.add(task);
-						task.start();
-					}
-				}			
+				for(int i = 0; i < visibleItemCount; i++) {
+					Task task = new Task(firstVisibleItem+i);
+					tasks.add(task);
+					task.start();
+				}
+							
 				break;
 			case SCROLL_STATE_TOUCH_SCROLL:
 				clearTasks();
@@ -134,6 +131,11 @@ public class AdapterScrollManager<T> {
 			if(scrollInterface != null)scrollInterface.onScroll(view, scrollState, firstVisibleItem, visibleItemCount, totalItemCount);
 		}		
 		
+	}
+	
+	public void clear(){
+		drawableMap.clear();
+		clearTasks();		
 	}
 
 }

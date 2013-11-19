@@ -26,6 +26,9 @@ public abstract class ImageScrollAdapter extends BaseAdapter  implements CreateI
 			onScrollend(view);
 		}
 	}
+	public void clear(){
+		imageScrollManager.clear();
+	}
 	
 	protected abstract void onScrollend(AbsListView view);
 }
