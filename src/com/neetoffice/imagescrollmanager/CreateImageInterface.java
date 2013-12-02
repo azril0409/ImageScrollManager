@@ -1,8 +1,8 @@
 package com.neetoffice.imagescrollmanager;
 
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 
-public interface CreateImageInterface<T> {
+public interface CreateImageInterface {
 
-	T[] onCreateImage(int position);
+	Bitmap[] onCreateImage(int position);
 }

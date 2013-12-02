@@ -4,14 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.annotation.SuppressLint;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 
 @SuppressLint("UseSparseArrays")
-public class AdapterScrollManager<T> {
+public class BitmapScrollManager {
 	/**The user had previously been scrolling using touch and had performed a fling. The animation is now coasting to a stop.*/
 	public final static int SCROLL_STATE_FLING = OnScrollListener.SCROLL_STATE_FLING;
 	/**The view is not scrolling. Note navigating the list using the trackball counts as being in the idle state since these transitions are not animated.*/
@@ -19,17 +20,18 @@ public class AdapterScrollManager<T> {
 	/**The user is scrolling using touch, and their finger is still on the screen.*/
 	public final static int SCROLL_STATE_TOUCH_SCROLL = OnScrollListener.SCROLL_STATE_TOUCH_SCROLL;
 	private BaseAdapter adapter;
-	private CreateImageInterface<T> imageScrollInterface;
+	private CreateImageInterface imageScrollInterface;
 	private ScrollInterface scrollInterface;
-	private HashMap<Integer,T[]> drawableMap = new HashMap<Integer,T[]>();
+	private HashMap<Integer,Bitmap[]> drawableMap = new HashMap<Integer,Bitmap[]>();
 	private ArrayList<Task> tasks = new ArrayList<Task>();
 	private int firstVisibleItem = 0;
 	private int visibleItemCount = 0;
 	private int totalItemCount = 0;
 	private Handler handler = new Handler();
 	private Listener listener;
+	private int rage = 1;
 	
-	public AdapterScrollManager(BaseAdapter adapter, CreateImageInterface<T> imageScrollInterface,ScrollInterface scrollInterface){
+	public BitmapScrollManager(BaseAdapter adapter, CreateImageInterface imageScrollInterface,ScrollInterface scrollInterface){
 		this.adapter = adapter;
 		this.imageScrollInterface = imageScrollInterface;
 		this.scrollInterface = scrollInterface;
@@ -58,7 +60,7 @@ public class AdapterScrollManager<T> {
 		}
 	}
 	
-	public T[] getDrawable(int position){
+	public Bitmap[] getBitmap(int position){
 		return drawableMap.get(position);
 	}
 	
@@ -74,7 +76,11 @@ public class AdapterScrollManager<T> {
 		@Override
 		public void run() {
 			if(!isCancel && imageScrollInterface != null){
-				T[] t = imageScrollInterface.onCreateImage(position);
+				Bitmap[] t = null;
+				if(drawableMap.get(position) == null){
+					Log.e("", "drawableMap.get(position) == null");
+					t = imageScrollInterface.onCreateImage(position);
+				};
 				handler.post(new TaskRunnable(position,t));
 			}
 		}
@@ -82,19 +88,23 @@ public class AdapterScrollManager<T> {
 	
 	private class TaskRunnable implements Runnable{
 		private int position;
-		private T[] t;
-		TaskRunnable(int position,T[] t){
+		private Bitmap[] t;
+		TaskRunnable(int position,Bitmap[] t){
 			this.position = position;
 			this.t = t;
 		}
 		public void run() {
-			drawableMap.put(position,t);
-			if(adapter != null && listener.scrollState == SCROLL_STATE_IDLE)adapter.notifyDataSetChanged();
+			if(t != null){
+				drawableMap.put(position,t);
+			}
+			if(adapter != null && listener.scrollState == SCROLL_STATE_IDLE){
+				adapter.notifyDataSetChanged();
+			}
 		}		
 	}
 	
 	private class Listener implements OnScrollListener{
-		int scrollState;
+		int scrollState = SCROLL_STATE_IDLE;
 
 		public void onScroll(AbsListView view, int f, int v, int t) {
 			firstVisibleItem = f;
@@ -109,18 +119,11 @@ public class AdapterScrollManager<T> {
 				clearTasks();
 				break;
 			case SCROLL_STATE_IDLE:
-				HashMap<Integer,T[]> drawables = new HashMap<Integer,T[]>();
-				for(Integer key:drawableMap.keySet()){
-					if(key>firstVisibleItem && key <(firstVisibleItem+visibleItemCount)){
-						drawables.put(key, drawableMap.get(key));
-					}
-				}
-				drawableMap.clear();
-				drawableMap.putAll(drawables);
-				for(int i = 0; i < visibleItemCount; i++) {
-					Task task = new Task(firstVisibleItem+i);
-					tasks.add(task);
-					task.start();
+				for(int i = -rage; i < visibleItemCount+rage; i++) {
+					int index = firstVisibleItem+i;
+					if(index <0)index = 0;
+					if(index>totalItemCount)index = index-1;
+					onScrollStateIdle(index);
 				}
 							
 				break;
@@ -130,12 +133,20 @@ public class AdapterScrollManager<T> {
 			}
 			if(scrollInterface != null)scrollInterface.onScroll(view, scrollState, firstVisibleItem, visibleItemCount, totalItemCount);
 		}		
-		
+	}
+	
+	public void onScrollStateIdle(int position){
+		Task task = new Task(position);
+		tasks.add(task);
+		task.start();
 	}
 	
 	public void clear(){
-		drawableMap.clear();
+		for(Bitmap[] bitmaps : drawableMap.values()){
+			for(Bitmap bitmap:bitmaps){
+				bitmap.recycle();
+			}
+		}
 		clearTasks();		
 	}
-
 }
