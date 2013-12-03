@@ -1,7 +1,9 @@
 package com.neetoffice.imagescrollmanager;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
@@ -12,7 +14,7 @@ import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 
 @SuppressLint("UseSparseArrays")
-public class BitmapScrollManager {
+public class ScrollManager<T> {
 	/**The user had previously been scrolling using touch and had performed a fling. The animation is now coasting to a stop.*/
 	public final static int SCROLL_STATE_FLING = OnScrollListener.SCROLL_STATE_FLING;
 	/**The view is not scrolling. Note navigating the list using the trackball counts as being in the idle state since these transitions are not animated.*/
@@ -20,9 +22,9 @@ public class BitmapScrollManager {
 	/**The user is scrolling using touch, and their finger is still on the screen.*/
 	public final static int SCROLL_STATE_TOUCH_SCROLL = OnScrollListener.SCROLL_STATE_TOUCH_SCROLL;
 	private BaseAdapter adapter;
-	private CreateImageInterface imageScrollInterface;
+	private CreateInterface<T> imageScrollInterface;
 	private ScrollInterface scrollInterface;
-	private HashMap<Integer,Bitmap[]> drawableMap = new HashMap<Integer,Bitmap[]>();
+	private HashMap<Integer,List<SoftReference<T>>> tMap = new HashMap<Integer,List<SoftReference<T>>>();
 	private ArrayList<Task> tasks = new ArrayList<Task>();
 	private int firstVisibleItem = 0;
 	private int visibleItemCount = 0;
@@ -31,7 +33,7 @@ public class BitmapScrollManager {
 	private Listener listener;
 	private int rage = 1;
 	
-	public BitmapScrollManager(BaseAdapter adapter, CreateImageInterface imageScrollInterface,ScrollInterface scrollInterface){
+	public ScrollManager(BaseAdapter adapter, CreateInterface imageScrollInterface,ScrollInterface scrollInterface){
 		this.adapter = adapter;
 		this.imageScrollInterface = imageScrollInterface;
 		this.scrollInterface = scrollInterface;
@@ -60,8 +62,8 @@ public class BitmapScrollManager {
 		}
 	}
 	
-	public Bitmap[] getBitmap(int position){
-		return drawableMap.get(position);
+	public List<SoftReference<T>> getItem(int position){
+		return tMap.get(position);
 	}
 	
 	private class Task extends Thread{
@@ -76,8 +78,8 @@ public class BitmapScrollManager {
 		@Override
 		public void run() {
 			if(!isCancel && imageScrollInterface != null){
-				Bitmap[] t = null;
-				if(drawableMap.get(position) == null){
+				T[] t = null;
+				if(tMap.get(position) == null){
 					Log.e("", "drawableMap.get(position) == null");
 					t = imageScrollInterface.onCreateImage(position);
 				};
@@ -88,15 +90,16 @@ public class BitmapScrollManager {
 	
 	private class TaskRunnable implements Runnable{
 		private int position;
-		private Bitmap[] t;
-		TaskRunnable(int position,Bitmap[] t){
+		private List<SoftReference<T>> ts = new ArrayList<SoftReference<T>>();
+		TaskRunnable(int position,T[] ts){
 			this.position = position;
-			this.t = t;
+			if(ts != null){
+			for(T t:ts){
+				this.ts.add(new SoftReference<T>(t));
+			}}
 		}
 		public void run() {
-			if(t != null){
-				drawableMap.put(position,t);
-			}
+			tMap.put(position,ts);			
 			if(adapter != null && listener.scrollState == SCROLL_STATE_IDLE){
 				adapter.notifyDataSetChanged();
 			}
@@ -119,6 +122,14 @@ public class BitmapScrollManager {
 				clearTasks();
 				break;
 			case SCROLL_STATE_IDLE:
+				HashMap<Integer,List<SoftReference<T>>> drawables = new HashMap<Integer,List<SoftReference<T>>>();
+				for(Integer key:tMap.keySet()){
+					if(key>firstVisibleItem && key <(firstVisibleItem+visibleItemCount)){
+						drawables.put(key, tMap.get(key));
+					}
+				}
+				tMap.clear();
+				tMap.putAll(drawables);
 				for(int i = -rage; i < visibleItemCount+rage; i++) {
 					int index = firstVisibleItem+i;
 					if(index <0)index = 0;
@@ -142,11 +153,7 @@ public class BitmapScrollManager {
 	}
 	
 	public void clear(){
-		for(Bitmap[] bitmaps : drawableMap.values()){
-			for(Bitmap bitmap:bitmaps){
-				bitmap.recycle();
-			}
-		}
+		tMap.clear();
 		clearTasks();		
 	}
 }
