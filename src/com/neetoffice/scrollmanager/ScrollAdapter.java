@@ -1,15 +1,15 @@
-package com.neetoffice.imagescrollmanager;
+package com.neetoffice.scrollmanager;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
 
-import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
 
-public abstract class ImageScrollAdapter extends BaseAdapter  implements CreateInterface<Bitmap>,ScrollInterface{
-	private ScrollManager<Bitmap> scrollManager= new ScrollManager<Bitmap>(this,this,this);
+public abstract class ScrollAdapter extends BaseAdapter  implements CreateInterface<Drawable>,ScrollInterface{
+	private ScrollManager<Drawable> scrollManager= new ScrollManager<Drawable>(this,this,this);
 		
 	public OnScrollListener getOnScrollListener(){
 		return scrollManager.getOnScrollListener();
@@ -19,18 +19,14 @@ public abstract class ImageScrollAdapter extends BaseAdapter  implements CreateI
 		scrollManager.onScrollStateIdle(position);
 	}
 	
-	protected void setCreateFristImage(int limt){
-		scrollManager.setCreateFristImage(limt);
+	protected void setCreateFristData(int limt){
+		scrollManager.setCreateFristData(limt);
 	}
 	
-	protected Bitmap[] getBitmap(int position){
-		List<SoftReference<Bitmap>> list = scrollManager.getItem(position);
-		if(list == null || list.size() < 1)return null;
-		Bitmap[] bitmaps = new Bitmap[list.size()];
-		for(int i=0;i<list.size();i++){
-			bitmaps[i] = list.get(i).get();
-		}
-		return bitmaps;
+	@SuppressWarnings("unchecked")
+	protected SoftReference<Drawable>[] getDatas(int position){
+		List<SoftReference<Drawable>> list = scrollManager.getItem(position);		
+		return list.toArray(new SoftReference[list.size()]);
 	}
 
 	@Override

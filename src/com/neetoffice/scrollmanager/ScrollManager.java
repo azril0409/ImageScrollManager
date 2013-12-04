@@ -1,4 +1,4 @@
-package com.neetoffice.imagescrollmanager;
+package com.neetoffice.scrollmanager;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public class ScrollManager<T> {
 		tasks.clear();		
 	}
 	
-	public void setCreateFristImage(int limt){
+	public void setCreateFristData(int limt){
 		firstVisibleItem = 0;
 		visibleItemCount = limt;
 
@@ -81,7 +81,7 @@ public class ScrollManager<T> {
 				T[] t = null;
 				if(tMap.get(position) == null){
 					Log.e("", "drawableMap.get(position) == null");
-					t = imageScrollInterface.onCreateImage(position);
+					t = imageScrollInterface.onCreateDatas(position);
 				};
 				handler.post(new TaskRunnable(position,t));
 			}
